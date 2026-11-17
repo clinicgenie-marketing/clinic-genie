@@ -170,7 +170,16 @@ function buildEmailText(record: ContactSubmissionRecord): string {
   ].join("\n");
 }
 
-const DEFAULT_NOTIFICATION_EMAIL = "marketing@clinic-genie.com";
+const DEFAULT_NOTIFICATION_EMAILS = ["hello@clinic-genie.com", "marketing@clinic-genie.com"];
+
+/** CONTACT_NOTIFICATION_EMAIL accepts one address or a comma-separated list. */
+function notificationRecipients(): string[] {
+  const configured = (process.env.CONTACT_NOTIFICATION_EMAIL ?? "")
+    .split(",")
+    .map((address) => address.trim())
+    .filter(Boolean);
+  return configured.length > 0 ? configured : DEFAULT_NOTIFICATION_EMAILS;
+}
 
 function resendConfig() {
   const apiKey = process.env.RESEND_API_KEY?.trim();
@@ -179,7 +188,7 @@ function resendConfig() {
   }
   return {
     resend: new Resend(apiKey),
-    to: process.env.CONTACT_NOTIFICATION_EMAIL?.trim() || DEFAULT_NOTIFICATION_EMAIL,
+    to: notificationRecipients(),
     from:
       process.env.RESEND_FROM_EMAIL?.trim() || "Clinic Genie <onboarding@resend.dev>",
   };
