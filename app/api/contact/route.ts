@@ -52,17 +52,22 @@ export async function POST(request: Request) {
   }
 
   try {
-    let record: ContactSubmissionRecord;
+    let record: ContactSubmissionRecord = buildLocalRecord(parsed.data);
     let persisted = false;
+    let savedToEnquiryDb = false;
 
-    if (hasEnquiryDatabase()) {
-      record = await saveEnquirySubmission(parsed.data);
-      persisted = true;
-    } else if (hasSupabaseConfig()) {
-      record = await saveContactSubmission(parsed.data);
-      persisted = true;
-    } else {
-      record = buildLocalRecord(parsed.data);
+    // A storage failure must not stop the notification email from going out.
+    try {
+      if (hasEnquiryDatabase()) {
+        record = await saveEnquirySubmission(parsed.data);
+        persisted = true;
+        savedToEnquiryDb = true;
+      } else if (hasSupabaseConfig()) {
+        record = await saveContactSubmission(parsed.data);
+        persisted = true;
+      }
+    } catch (storageError) {
+      console.error("Contact persistence failed:", storageError);
     }
 
     let emailed = false;
@@ -73,7 +78,7 @@ export async function POST(request: Request) {
       console.error("Contact notification failed:", emailError);
     }
 
-    if (hasEnquiryDatabase()) {
+    if (savedToEnquiryDb) {
       await markEnquiryNotification(record.id, emailed);
     }
 
