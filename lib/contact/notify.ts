@@ -170,7 +170,7 @@ function buildEmailText(record: ContactSubmissionRecord): string {
   ].join("\n");
 }
 
-const DEFAULT_NOTIFICATION_EMAIL = "hello@clinic-genie.com";
+const DEFAULT_NOTIFICATION_EMAIL = "marketing@clinic-genie.com";
 
 function resendConfig() {
   const apiKey = process.env.RESEND_API_KEY?.trim();
